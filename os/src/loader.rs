@@ -31,20 +31,20 @@ static USER_STACK: [UserStack; MAX_APP_NUM] = [UserStack {
 
 impl KernelStack {
     fn get_sp(&self) -> usize {
-        self.data.as_ptr() as usize + KERNEL_STACK_SIZE
+        self.data.as_ptr() as *const () as usize + KERNEL_STACK_SIZE
     }
     pub fn push_context(&self, trap_cx: TrapContext) -> usize {
         let trap_cx_ptr = (self.get_sp() - core::mem::size_of::<TrapContext>()) as *mut TrapContext;
         unsafe {
             *trap_cx_ptr = trap_cx;
         }
-        trap_cx_ptr as usize
+        trap_cx_ptr as *const () as usize
     }
 }
 
 impl UserStack {
     fn get_sp(&self) -> usize {
-        self.data.as_ptr() as usize + USER_STACK_SIZE
+        self.data.as_ptr() as *const () as usize + USER_STACK_SIZE
     }
 }
 
@@ -58,7 +58,7 @@ pub fn get_num_app() -> usize {
     extern "C" {
         fn _num_app();
     }
-    unsafe { (_num_app as usize as *const usize).read_volatile() }
+    unsafe { (_num_app as *const () as usize as *const usize).read_volatile() }
 }
 
 /// Load nth user app at
@@ -67,7 +67,7 @@ pub fn load_apps() {
     extern "C" {
         fn _num_app();
     }
-    let num_app_ptr = _num_app as usize as *const usize;
+    let num_app_ptr = _num_app as *const () as usize as *const usize;
     let num_app = get_num_app();
     let app_start = unsafe { core::slice::from_raw_parts(num_app_ptr.add(1), num_app + 1) };
     // load apps

@@ -19,7 +19,6 @@
 #![deny(warnings)]
 #![no_std]
 #![no_main]
-#![feature(panic_info_message)]
 #![feature(alloc_error_handler)]
 
 #[macro_use]
@@ -51,8 +50,11 @@ fn clear_bss() {
         fn ebss();
     }
     unsafe {
-        core::slice::from_raw_parts_mut(sbss as usize as *mut u8, ebss as usize - sbss as usize)
-            .fill(0);
+        core::slice::from_raw_parts_mut(
+            sbss as *const () as usize as *mut u8,
+            ebss as *const () as usize - sbss as *const () as usize,
+        )
+        .fill(0);
     }
 }
 
@@ -74,22 +76,25 @@ fn kernel_log_info() {
     println!("[kernel] Hello, world!");
     trace!(
         "[kernel] .text [{:#x}, {:#x})",
-        stext as usize,
-        etext as usize
+        stext as *const () as *const () as usize,
+        etext as *const () as usize
     );
     debug!(
         "[kernel] .rodata [{:#x}, {:#x})",
-        srodata as usize, erodata as usize
+        srodata as *const () as usize, erodata as *const () as usize
     );
     info!(
         "[kernel] .data [{:#x}, {:#x})",
-        sdata as usize, edata as usize
+        sdata as *const () as usize, edata as *const () as usize
     );
     warn!(
         "[kernel] boot_stack top=bottom={:#x}, lower_bound={:#x}",
-        boot_stack_top as usize, boot_stack_lower_bound as usize
+        boot_stack_top as *const () as usize, boot_stack_lower_bound as *const () as usize
     );
-    error!("[kernel] .bss [{:#x}, {:#x})", sbss as usize, ebss as usize);
+    error!(
+        "[kernel] .bss [{:#x}, {:#x})",
+        sbss as *const () as usize, ebss as *const () as usize
+    );
 }
 
 #[no_mangle]
