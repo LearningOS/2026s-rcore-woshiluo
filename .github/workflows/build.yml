@@ -28,19 +28,22 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       points: ${{ steps.end.outputs.points }}
-    container:
-      image: alicesama/rcore-ci:2024a
     steps:
       - uses: actions/checkout@v4
+      - name: Install dev dependencies
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y qemu-system-misc
       - name: Run tests
         run: |
           qemu-system-riscv64 --version
-          rustup target add riscv64gc-unknown-none-elf
           git config --global --add safe.directory /__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}
           git clone https://github.com/LearningOS/rCore-Tutorial-Checker.git ci-user
           git clone https://github.com/LearningOS/rCore-Tutorial-Test.git ci-user/user
           ID=`git rev-parse --abbrev-ref HEAD | grep -oP 'ch\K[0-9]'`
-          cd ci-user
+          cd ci-user/user
+          rustup target add riscv64gc-unknown-none-elf
+          cd ..
           make test CHAPTER=$ID | tee ../output.txt
       - name: end
         id: end
